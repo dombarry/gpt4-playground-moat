@@ -13,9 +13,18 @@ const openai = new OpenAI({
 // IMPORTANT! Set the runtime to edge
 export const runtime = 'edge';
 
+// Custom instruction for the model
+const HIDDEN_INSTRUCTION = {
+  role: 'system',
+  content: 'You are a GPT-4 model focused on emotional care. Prioritize the users well being, and talk in a conversational, welcoming and open way.'
+};
+
 export async function POST(req: Request) {
-  // Extract the `prompt` from the body of the request
-  const { messages } = await req.json();
+  // Extract the `messages` from the body of the request
+  const { messages: userMessages } = await req.json();
+
+  // Prepend the hidden instruction to the user's messages
+  const messages = [HIDDEN_INSTRUCTION, ...userMessages];
 
   // Ask OpenAI for a streaming chat completion given the prompt
   const response = await openai.chat.completions.create({
@@ -26,6 +35,8 @@ export async function POST(req: Request) {
 
   // Convert the response into a friendly text-stream
   const stream = OpenAIStream(response);
+
   // Respond with the stream
   return new StreamingTextResponse(stream);
 }
+
